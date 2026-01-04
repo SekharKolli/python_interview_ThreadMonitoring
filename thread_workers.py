@@ -4,37 +4,42 @@ import random
 import time
 
 # Amount of time each iteration waits to simulate a computation task
-TASK_PROCESSING_DELAY = 0.3
+TASK_PROCESSING_DELAY = 0.5
 NO_OF_RUNS = 30  # Defined globally for the print statements
 
 
-def big_computing_job(job_id: str | int, remaining_runs: int = 30):
+def big_computing_job(job_id: str | int, run_job_for: int = NO_OF_RUNS):
     '''
-    A worker function. This simulates work and a crash. We have a random int generator, which could generate a zero causing it to crash. 
-    :param worker_id: Id which identifies the worker provided to identify worker
-    :type worker_id: int
-    '''
-    divisions_completed = 0 if remaining_runs == NO_OF_RUNS else remaining_runs  # Tracks how many tasks are complete
+    A worker function. This simulates work (which is divide with a random int) and a crash (which is divide with a zero) 
 
+    :param job_id: An id, which uniquely identifies the job and the call made
+    :type job_id: str | int
+    :param run_job_for: How many times should the job iterate for? Default is defined in NO_OF_RUNS global variable, which is set to 30.
+    :type run_job_for: int
+    '''
     print(f"{job_id=:03}{":✅ Starting":.<15}")
+    divisions_completed = 1
+    remaining_runs = run_job_for
 
     while remaining_runs > 0:
         remaining_runs -= 1
 
         try:
-            divisor = random.randint(0, 5)
-            divisions_completed += 1
+            task = random.randint(0, 5)
             print(
-                f"{job_id=:03}:{f"[{divisions_completed:02}/{NO_OF_RUNS:02}] Crunching 1/{divisor}":_<15}", end="")
-            print(f": {1/divisor:0.6f}")
+                f"{job_id=:03}:{f"[{divisions_completed:02}/{run_job_for:02}] Crunching 1/{task}":_<15}", end="")
+            print(f": {1/task:0.6f}")
+            divisions_completed += 1
+
             # simulating time taken to perform operation
             time.sleep(TASK_PROCESSING_DELAY)
+
         except ZeroDivisionError:
             print(f"{":⚠️ Exception⚠️":.<15}")
-            break
+            return {"job_id": job_id, "success": False, "remaining": remaining_runs}
 
     print(f"{job_id=:03}{":❎ Exiting":.<15} : {divisions_completed=:02}")
-    return (job_id, divisions_completed)
+    return {"job_id": job_id, "success": True, "remaining": 0}
 
 
 def demo_threading() -> None:
@@ -72,23 +77,24 @@ def demo_auto_thread_revival() -> None:
     job_ids = ["🐮", "🐯", "🐰"]
 
     with ThreadPoolExecutor(max_workers=5) as executor:
-        job_queue = {executor.submit(big_computing_job, jid): jid
+        # initial submission
+        jobs_dict = {executor.submit(big_computing_job, jid, NO_OF_RUNS): jid
                      for jid in job_ids}
 
-        while job_queue:
+        while jobs_dict:
             # as_completed yields futures as they resolve (either finish or crash)
-            for job in as_completed(job_queue):
-                job_id = job_queue.pop(job)
+            for job in as_completed(jobs_dict):
+                job_id = jobs_dict.pop(job)
                 try:
-                    result = job["result"]
+                    examined_job = job.result()
 
-                    if not result["success"]:
+                    if not examined_job["success"]:
                         print(
-                            f"--- 🔄 Reviving Job {job_id} ({result["remaining"]} runs left) ---")
+                            f"--- 🔄 Reviving Job {job_id} ({examined_job["remaining"]} runs left) ---")
                         # Re-submit the job with the remaining count
                         new_job = executor.submit(
-                            big_computing_job, job_id, result["remaining"])
-                        job_queue[new_job] = job_id
+                            big_computing_job, job_id, examined_job["remaining"])
+                        jobs_dict[new_job] = job_id
                     else:
                         print(f"--- ✨ Job {job_id} Finished Successfully ---")
 
