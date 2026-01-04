@@ -7,19 +7,18 @@ NO_OF_RUNS = 30  # Maximum number of numbers before we exit the loop
 TIME_CONSUMED_FOR_CALC = 0.3
 
 
-def big_computing_job(job_id: str | int):
+def big_computing_job(job_id: str | int, no_of_runs: int = 30):
     '''
     A worker function. This simulates work and a crash. We have a random int generator, which could generate a zero causing it to crash. 
     :param worker_id: Id which identifies the worker provided to identify worker
     :type worker_id: int
     '''
     divisions_completed = 0
-    tries = NO_OF_RUNS
 
     print(f"{job_id=:03}{":✅ Starting":.<15}")
 
-    while tries >= 0:
-        tries -= 1
+    while no_of_runs >= 0:
+        no_of_runs -= 1
 
         try:
             task = random.randint(0, 5)
@@ -45,18 +44,27 @@ def demo_threading() -> None:
     t1 = threading.Thread(target=big_computing_job, args="🐮")
     t2 = threading.Thread(target=big_computing_job, args="🐯")
     t3 = threading.Thread(target=big_computing_job, args="🐰")
-    t4 = threading.Thread(target=big_computing_job, args="🐱")
 
     t1.start()
     t2.start()
     t3.start()
-    t4.start()
 
     t1.join()
     t2.join()
     t3.join()
-    t4.join()
+
+
+def demo_auto_threading() -> None:
+    '''Demos how to create a thread pool which automatically manages the threads '''
+
+    from concurrent.futures import ThreadPoolExecutor
+
+    with ThreadPoolExecutor(max_workers=5) as executor:
+        executor.submit(big_computing_job, "🐮")
+        executor.submit(big_computing_job, "🐯")
+        executor.submit(big_computing_job, "🐰")
 
 
 if __name__ == "__main__":
-    demo_threading()
+    # demo_threading()
+    demo_auto_threading()
