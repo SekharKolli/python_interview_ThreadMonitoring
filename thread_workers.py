@@ -4,14 +4,13 @@ import random
 import time
 
 NO_OF_RUNS = 30  # Maximum number of numbers before we exit the loop
-TIME_CONSUMED_FOR_CALC = 0.1
+TIME_CONSUMED_FOR_CALC = 0.3
 
 
-def worker_thread(job_id: int):
+def big_computing_job(job_id: str | int):
     '''
-    A worker function which will crash b'cos of divide by zero or 30 
-
-    :param worker_id: Id provided to identify worker
+    A worker function. This simulates work and a crash. We have a random int generator, which could generate a zero causing it to crash. 
+    :param worker_id: Id which identifies the worker provided to identify worker
     :type worker_id: int
     '''
     divisions_completed = 0
@@ -26,24 +25,38 @@ def worker_thread(job_id: int):
             task = random.randint(0, 5)
             divisions_completed += 1
             print(
-                f"{job_id=:03}:{f"[{divisions_completed:02}/{NO_OF_RUNS:02}] performing 1/{task}":_<15}", end="")
-            print(f": {1/task}")
+                f"{job_id=:03}:{f"[{divisions_completed:02}/{NO_OF_RUNS:02}] Crunching 1/{task}":_<15}", end="")
+            print(f": {1/task:0.6f}")
             # simulating time taken to perform operation
             time.sleep(TIME_CONSUMED_FOR_CALC)
         except ZeroDivisionError:
-            print(f"{":⚠️  Exception":.<15}")
+            print(f"{":⚠️ Exception⚠️":.<15}")
             break
 
-    print(f"{job_id=:03}{":✅ Exiting":.<15} : {divisions_completed=:02}")
+    print(f"{job_id=:03}{":❎ Exiting":.<15} : {divisions_completed=:02}")
     return (job_id, divisions_completed)
 
 
-def main() -> None:
+def demo_threading() -> None:
+    '''Function that demos the use of threads. Here we manually initiate the start and then join them'''
+    import threading
 
-    worker_thread(1)
-    worker_thread(2)
-    worker_thread(3)
+    # 🐮🐯🐰🐱
+    t1 = threading.Thread(target=big_computing_job, args="🐮")
+    t2 = threading.Thread(target=big_computing_job, args="🐯")
+    t3 = threading.Thread(target=big_computing_job, args="🐰")
+    t4 = threading.Thread(target=big_computing_job, args="🐱")
+
+    t1.start()
+    t2.start()
+    t3.start()
+    t4.start()
+
+    t1.join()
+    t2.join()
+    t3.join()
+    t4.join()
 
 
 if __name__ == "__main__":
-    main()
+    demo_threading()
