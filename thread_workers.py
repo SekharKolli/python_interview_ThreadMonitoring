@@ -18,7 +18,7 @@ def big_computing_job(job_id: str | int, run_job_for: int = NO_OF_RUNS):
     :type run_job_for: int
     '''
     print(f"{job_id=:03}{":✅ Starting":.<15}")
-    divisions_completed = 1
+    divisions_completed = 0
     remaining_runs = run_job_for
 
     while remaining_runs > 0:
